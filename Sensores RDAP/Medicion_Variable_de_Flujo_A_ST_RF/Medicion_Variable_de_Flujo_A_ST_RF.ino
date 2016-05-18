@@ -40,8 +40,9 @@ ISR(TIMER1_OVF_vect)        // interrupt service routine
     lcd.setCursor(0,0);
     lcd.print("V = ");
     lcd.print(r);        //caudal 
-    //lcd.setCursor(11,0);      //Impresiones de pruebas
-    lcd.print(" m/si");
+    lcd.print(" m/s");
+    lcd.setCursor(0,1);      //Impresiones de pruebas
+    lcd.print(pro);
     p = 0;
     cp = 0;
   //} 

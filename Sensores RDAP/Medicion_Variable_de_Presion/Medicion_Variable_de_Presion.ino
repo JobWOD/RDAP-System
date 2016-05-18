@@ -31,11 +31,11 @@ ISR(TIMER1_OVF_vect)        // interrupt service routine
   k++;
   r = p/i;
   red = r * 1000;
-  ref = 1.1642 * red - 969.6;
+  ref = 0.0114 * red - 9.4773;
   if (red <= 835)
     ref = 0;
-  rca = ref/10;
-  rkc = ref/100;
+  rca = ref*10;
+  rkc = ref*100;
   p=0;
   i=0;
   r=0;
