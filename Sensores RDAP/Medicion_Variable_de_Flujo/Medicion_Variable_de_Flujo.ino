@@ -21,6 +21,7 @@ void setup()
   interrupts();             // enable all interrupts
   Serial.begin(9600);
   Serial.print("bb");
+  Serial.print("bb");
 }
 
 ISR(TIMER1_OVF_vect)        // interrupt service routine 
@@ -34,7 +35,7 @@ ISR(TIMER1_OVF_vect)        // interrupt service routine
      V = 0.0368 * fin + 0.2521;
      if (fin == 0)
       V = 0;
-     c=0;                    // Respaldo de flujo pues era codigo espcifico para el canal
+     c=0;                         // Respaldo de flujo pues era codigo espcifico para el canal
      frecs = 0;  
   }
 }
@@ -62,8 +63,8 @@ void loop(){
           dtostrf(V,5,3,con);
         else
           dtostrf(V,6,3,con);
-        cad.concat(con);
         delay(10000);
+        cad.concat(con);
         Serial.print(cad);
     }
     
@@ -75,8 +76,8 @@ void loop(){
    
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Flujo: ");
-  lcd.setCursor(7, 0);
+  lcd.print("Vel.: ");
+  lcd.setCursor(6, 0);
   lcd.print(V);
-  lcd.print(" V"); 
+  lcd.print(" m/s"); 
 }
