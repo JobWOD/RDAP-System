@@ -30,18 +30,12 @@ ISR(TIMER1_OVF_vect)        // interrupt service routine
   if (b == 60){
      b=0;
      frecf = frecs/c;
-     fin = frecf;
-     flujo = fin/9.9;
-     flu = flujo*10;
-     flujo = flu/10.0;       // Despues de esta linea se respalda codigo en el archivo 
-     RF = 0.5612 * flujo + 0.5582;
-     if (flujo == 0)
-      RF = 0;
-     c=0;                    // Respaldo de flujo pues era codigo espcifico para el canal
-     frecs = 0;              // de pruebas. ahora solo envia la velocidad
-     V = 0.0368 * RF + 0.2521;
-     if (RF == 0)
+     fin = frecf;                  // Ahora solo envia la velocidad
+     V = 0.0368 * fin + 0.2521;
+     if (fin == 0)
       V = 0;
+     c=0;                    // Respaldo de flujo pues era codigo espcifico para el canal
+     frecs = 0;  
   }
 }
 
