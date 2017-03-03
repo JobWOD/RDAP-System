@@ -1,16 +1,18 @@
-#include <LiquidCrystal.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
 
 //Inicializacion del los pines de control del Display
-LiquidCrystal lcd(6,7,8,9,10,11);
+
 double val = 0,r = 0,p = 0,ref,rkc,rca;
 int timer1_counter,i=0,red,j = 0,rcat,k=0;
 char a;
 String cad;
 char con[6];
 
+LiquidCrystal_I2C lcd(0x27,16,2);
+
 void setup() {
   //Definicion de las columnas y filas del Display 
-  lcd.begin(16, 2);
   pinMode(5,INPUT);
   // initialize timer1 
   noInterrupts();           // disable all interrupts

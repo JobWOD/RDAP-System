@@ -63,8 +63,8 @@ void loop(){
           dtostrf(V,5,3,con);
         else
           dtostrf(V,6,3,con);
-        delay(10000);
         cad.concat(con);
+        delay(10000);
         Serial.print(cad);
     }
     

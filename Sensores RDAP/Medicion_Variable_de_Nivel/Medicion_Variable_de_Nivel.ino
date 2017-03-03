@@ -1,8 +1,8 @@
-#include <LiquidCrystal.h>
+//#include <LiquidCrystal.h>
 #include <SoftwareSerial.h>
 
 //Inicializacion del los pines de control del Display
-LiquidCrystal lcd(6,7,8,9,10,11);    //LiquidCrystal(rs, enable, d4, d5, d6, d7
+//LiquidCrystal lcd(6,7,8,9,10,11);    //LiquidCrystal(rs, enable, d4, d5, d6, d7
 SoftwareSerial x_bee(2,3);
 int n1,n2,n3,n4,n5,n6,j=0;
 int s1,s2,s3,s4,s5,s6,por;
@@ -14,9 +14,9 @@ char con[6];
 void setup() {
   delay(1000);
   //Definicion de las columnas y filas del Display 
-  lcd.begin(16,2);
+  //lcd.begin(16,2);
   // Print a message to the LCD.
-  lcd.print("Ini");
+  //lcd.print("Ini");
   Serial.begin(9600);
   x_bee.begin(9600);
   x_bee.print("bb");
@@ -26,32 +26,22 @@ void loop() {
   j = 0;
   if (Serial.available()>0 && j == 0){
     n1=Serial.read();
-    lcd.setCursor(0,2);
-    lcd.print(n1);
     j = 1;
   }
   if (Serial.available()>0 && j == 1){
     n2=Serial.read();
-    lcd.setCursor(2,2);
-    lcd.print(n2);
     j = 2;
   }
   if (Serial.available()>0 && j == 2){
     n3=Serial.read();
-    lcd.setCursor(4,2);
-    lcd.print(n3);
     j = 3;
   }
   if (Serial.available()>0 && j == 3){
     n4=Serial.read();
-    lcd.setCursor(6,2);
-    lcd.print(n4);
     j = 4;
   }
   if (Serial.available()>0 && j == 4){
     n5=Serial.read();
-    lcd.setCursor(8,2);
-    lcd.print(n5);
     j = 5;
   }
   if (Serial.available()>0 && j == 5){
@@ -67,12 +57,12 @@ void loop() {
     r = (s5*1)+(s4*10)+(s3*100)+(s2*1000)+(s1*10000);
     dis = r * 0.003384;
     discm = (dis * 2.54)/100.0;   //Distancia en cemtimetros, a continuacion se quito               
-    lcd.clear();                 //codigo que transformaba a volumen, guardado en archivo
+    /*lcd.clear();                 //codigo que transformaba a volumen, guardado en archivo
     lcd.setCursor(0,0);          //respaldo de nivel.
     lcd.print("Nivel: ");
     lcd.setCursor(7,0);
     lcd.print(discm);
-    lcd.print(" cm");    
+    lcd.print(" cm");*/  
     
     if (x_bee.available() > 0 ){
       
