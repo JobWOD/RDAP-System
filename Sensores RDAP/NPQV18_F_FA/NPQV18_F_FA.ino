@@ -71,7 +71,7 @@ void setup(){
   lcd.noBacklight();
   lcd.setCursor(0,0);
   lcd.print("Iniciando...");
-  wdt_enable(WDTO_250MS);
+  wdt_enable(WDTO_1S);
 }
 
 ISR(TIMER1_OVF_vect)        // Interrupt service routine, vector de interrupcion, se ejecuta al activar.
@@ -195,7 +195,7 @@ ISR(TIMER1_OVF_vect)        // Interrupt service routine, vector de interrupcion
 void loop()
 {      
   if (banres == 1){
-    delay(251);  
+    delay(1001);  
   }
   else
     wdt_reset();
