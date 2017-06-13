@@ -42,7 +42,7 @@ int canu;                                   // area de la tuberia guardada
 double art,dm;
 byte concam, bancl;                           // Variable de contador para mostrar la informacion en display
 byte concon, banres;                          // Contado de control = concon     // bancl = bandera de clean
-byte conres;                                  // Conres = contador de reset      banres = bandera de reset 
+unsigned int conres;                                  // Conres = contador de reset      banres = bandera de reset 
 byte bancon, banpress;                        // Bandera de control = bancon     //banpress = bandera de tecleo 
 byte conmp, conmf;
 byte conenv, banenv; 
@@ -161,7 +161,7 @@ ISR(TIMER1_OVF_vect)        // Interrupt service routine, vector de interrupcion
   //Contador de reset 
   conres++;
 
-  if (conres == 3600){        // Esta variable en segundos marca cuando el micro se resetea solo , por ahora lo dejare en 1 hora.
+  if (conres == 36000){        // Esta variable en segundos marca cuando el micro se resetea solo , por ahora lo dejare en 1 hora.
     banres = 1;
   }
 

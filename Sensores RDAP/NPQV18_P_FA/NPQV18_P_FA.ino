@@ -41,7 +41,7 @@ int canu;                                     // canu = area de la tuberia guard
 double art,dm;                                // dm = diametro en mm, canu = valor del area
 byte concam, bancl;                           // Variable de contador para mostrar la informacion en display
 byte concon, banres;                          // Contado de control = concon     // bancl = bandera de clean
-byte conres;                                  // Conres = contador de reset      banres = bandera de reset 
+unsigned int conres;                          // Conres = contador de reset      banres = bandera de reset 
 byte bancon, banpress;                        // Bandera de control = bancon     //banpress = bandera de tecleo 
 byte conmp, conmf;                            // conmp = contador medicion de presion, conmf = contador medicion de flujo
 byte conenv, banenv;                          // conenv = contador de envio, banenv = bandera de envio
@@ -177,7 +177,7 @@ ISR(TIMER1_OVF_vect)        // Interrupt service routine, vector de interrupcion
   //Contador de reset 
   conres++;                    // contador de reset cada segundo aumenta 
 
-  if (conres == 3600){        // Esta variable en segundos marca cuando el micro se resetea solo , por ahora lo dejare en 1 hora.
+  if (conres == 36000){        // Esta variable en segundos marca cuando el micro se resetea solo , por ahora lo dejare en 1 hora.
     banres = 1;
   }
 
@@ -384,19 +384,23 @@ void loop()
       lcd.setCursor ( 0, 0 );
       lcd.print("NM: ");
       lcd.print(EEPROMReadint(16));
-      lcd.print(" M: ");
-      lcd.print(EEPROMReadint(14));
       lcd.setCursor ( 0, 1 );
       lcd.print("AD: ");
       lcd.print(EEPROMReadlong(6));
-      lcd.print(" A: ");
-      lcd.print(EEPROMReadlong(10));
       break;
     case 14:
       lcd.setCursor ( 0, 0 );
       lcd.print("banacum: ");
       lcd.print(banacum);  
-      break;        
+      break;
+    case 15:
+      lcd.setCursor ( 0, 0 );
+      lcd.print(" M: ");
+      lcd.print(EEPROMReadint(14));
+      lcd.setCursor ( 0, 1 );
+      lcd.print(" A: ");
+      lcd.print(EEPROMReadlong(10));  
+      break;       
   } 
 
   //Area de sensores 
@@ -518,6 +522,7 @@ void keypadEvent(KeypadEvent eKey){      //aquientra al presionar cualquier tecl
             case 'C': sel = 2; break;
             case '*': sel = 13; break;
             case '#': sel = 14; break;
+            case '0': sel = 15; break;
           }
           bancl = 1;
           break;    
