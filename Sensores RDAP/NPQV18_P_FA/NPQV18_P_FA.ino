@@ -200,7 +200,7 @@ ISR(TIMER1_OVF_vect)        // Interrupt service routine, vector de interrupcion
   if (conenv == 11){
     cad="";                     // Se envia la cadena de flujo
     cad = "F";
-    if (fl < 10)
+    if (flp < 10)
       dtostrf(flp,4,2,con);
     else if (flp >= 10 && flp < 100)
       dtostrf(flp,5,2,con);
