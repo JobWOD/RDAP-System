@@ -11,13 +11,15 @@ SoftwareSerial x_bee(2,3);                    // Creación del puerto serial de 
 DateTime now;
 int ann,mes,dia,hora,minuto,ord;              // ann = año, ord = orden de entrada
 char an,an1,m,m1,d,d1,h,h1,mi,mi1;            // an = primer digito del año, an1 = segundo digito; m = primer digito del mes
-byte setclock;
-//Variables control de flujo frecuencias.     // acum fin = acumulado final
+byte setclock;                                // banacum = bandera de acumulados
+//Variables del flujo acumulado               // m1 = segundo dogito y asi los dias, horas y minutos.
+//Variables control de flujo frecuencias.
 //Variables control de flujo Amp.
 //Variables control de nivel
+int n1,n2,n3,n4,n5,n6,j=0;
+int s1,s2,s3,s4,s5,s6,por;
+double r,dis,discm,NA,Am = 2.0 ,V;
 //Variables de control de presion
-double val,r,p,ref,rkc,rca,srca,rcap;         // val = valor analogico 1, r = promedio de val, p = sumatoria, ref = ajuste de curvas
-int i,red;                                    // rkc = resultado en kg , rca = resultado en MCL, i = contador, red = redondeo
 //Variables control de envio de datos
 String cad;                                   // Cadena que se forma antes de ser enviada al Xbee
 char a;                                       // Lectura del caracter que manda el Xbee
@@ -33,8 +35,8 @@ byte concam, bancl;                           // Variable de contador para mostr
 byte concon, banres;                          // Contado de control = concon     // bancl = bandera de clean
 unsigned int conres;                                  // Conres = contador de reset      banres = bandera de reset 
 byte bancon, banpress;                        // Bandera de control = bancon     //banpress = bandera de tecleo 
-byte conmp, conmf;                            // conmp = contador medicion de presion, conmf = contador medicion de flujo
-byte conenv, banenv;                          // conenv = contador de envio, banenv = bandera de envio
+byte conmp, conmf;
+byte conenv, banenv; 
 // Mas variables del control del teclado
 byte Pins_Filas[] = {11, 10, 9, 8};           // Pines Arduino para las filas
 byte Pins_Cols[] = {7, 6, 5, 4};              // Pines Arduinopara las columnas
@@ -52,7 +54,7 @@ LiquidCrystal_I2C lcd(0x27,16,2);
  
 void setup(){   
   // initialize timer1 
-  val = r = p = i = concam = conmp = 0;
+  r = concam = conmp = j = 0;
   bancl = concon = banres = conres = bancon = banpress = 0, conenv = 0, banenv = 0;
   sel = 2;
   restaura();
@@ -83,23 +85,6 @@ ISR(TIMER1_OVF_vect)        // Interrupt service routine, vector de interrupcion
   TCNT1 = timer1_counter;   // Preload timer, es el tiempo precargado para que se cuente un segundo exacto.
 
   //Bloque de calculo de la variable de presion 
-  r = p/i;                                  // Se calcula el promedio de lod valores leidos
-  red = r * 1000;                           // Se redondea para mejorar la manipulacion de los datos
-  ref = 0.0114 * red - 9.8864;              // el ajuste de curvas hace referenca a un archivo excel /Users/REX/Documents/PBB's
-  if (red <= 870)                           // 820 es el valor real minimo en campo.                 /curvas caracterisitcas.xlsx
-    ref = 0;                        
-  rca = ref*10;                             // calcula el valor en metros columna de agua
-  conmp ++;                                 // sumatoria de mediciones
-  rkc = ref*100;                            // calcula el valor en kg
-  p=0;                                      // se inicia todo en 0 para un mejor calculo posterior
-  i=0;
-  r=0;
-  srca += rca;                              // sumatoria de metro columna de agua
-  if (conmp == 60){                         // al pasar un minuto
-    rcap = srca / conmp;                    // promedio de metros columna de agua
-    srca = 0;                               // reinicia sumatoria
-    conmp = 0;                              // reinicia numero de mediciones
-  }
 
   //Bloque de calculo de la variable de flujo Amp
 
@@ -138,7 +123,7 @@ ISR(TIMER1_OVF_vect)        // Interrupt service routine, vector de interrupcion
   }
 
   //Contador de reset 
-  conres++;                    // contador de reset cada segundo aumenta 
+  conres++;
 
   if (conres == 36000){        // Esta variable en segundos marca cuando el micro se resetea solo , por ahora lo dejare en 1 hora.
     banres = 1;
@@ -148,14 +133,14 @@ ISR(TIMER1_OVF_vect)        // Interrupt service routine, vector de interrupcion
     conenv++;
 
   if (conenv == 1){
-    cad="";                               // Se envia la cadena de presion
-    cad = "P";                            // cad es el string que se envia
-    if (rcap < 10)                         // 
-      dtostrf(rcap,4,2,con);
-    else if (rcap >= 10 && rcap < 100)
-      dtostrf(rcap,5,2,con);
+    cad="";                               // Se envia la cadena de nivel
+    cad = "N";                            // cad es el string que se envia
+    if (discm < 10)                         // 
+      dtostrf(discm,4,2,con);
+    else if (discm >= 10 && discm < 100)
+      dtostrf(discm,5,2,con);
     else 
-      dtostrf(rcap,6,2,con);
+      dtostrf(discm,6,2,con);
     cad.concat(con);
     x_bee.print(cad);
   }
@@ -172,7 +157,7 @@ void loop()
 
   //Obtencion de los datos del reloj cada segundo
   now = RTC.now(); // Obtiene la fecha y hora del RTC
-  
+
   if (bancl == 1){    // Bandera de clear para limpiar el display
     lcd.clear();      // Se limpia el Display y se reinicia la bandera
     bancl = 0;  
@@ -198,8 +183,8 @@ void loop()
       break;
     case 1:  
       lcd.setCursor ( 0, 0 );
-      lcd.print("1.Pressure");
-      break;
+      lcd.print("1.Level");
+      break;       
     case 2:  
       lcd.setCursor(0,0);
       lcd.print("Date: ");
@@ -223,23 +208,23 @@ void loop()
       if (now.second() < 10)
         lcd.print("0");
       lcd.print(now.second(), DEC); // Segundos   
-      break;       
+      break;
     case 3:  
       lcd.setCursor ( 0, 0 );
       lcd.print("Current value:");
       lcd.setCursor ( 0, 1 );
-      lcd.print("Pres.: ");
-      lcd.print(rcap);        // rcap     //Variable de presion
-      lcd.print(" MCA");   
-      break;           
+      lcd.print("Lev.: ");
+      lcd.print(discm);        // discm     //Variable de nivel
+      lcd.print(" m");  
+      break;
     case 4:  
       lcd.setCursor ( 0, 0 );
-      lcd.print("1.Set clock"); 
+      lcd.print("1.Set clock");
       break;          
     case 5:  
       lcd.setCursor ( 0, 0 );
       lcd.print("Data saved!");
-      break;  
+      break;   
     case 6: 
       lcd.setCursor ( 0, 0 );
       lcd.print("Date: ");
@@ -262,7 +247,7 @@ void loop()
       lcd.print(':');
       lcd.print(mi);
       lcd.print(mi1);
-      break;        
+      break;            
   } 
 
   //Area de sensores 
@@ -271,13 +256,44 @@ void loop()
 
   //Sensor de nivel
 
+  if (Serial.available()>0 && j == 0){
+    n1=Serial.read();
+    j = 1;
+  }
+  if (Serial.available()>0 && j == 1){
+    n2=Serial.read();
+    j = 2;
+  }
+  if (Serial.available()>0 && j == 2){
+    n3=Serial.read();
+    j = 3;
+  }
+  if (Serial.available()>0 && j == 3){
+    n4=Serial.read();
+    j = 4;
+  }
+  if (Serial.available()>0 && j == 4){
+    n5=Serial.read();
+    j = 5;
+  }
+  if (Serial.available()>0 && j == 5){
+    n6=Serial.read();
+    j = 6;
+  }
+  if (j == 6){
+    s1 = n1 - 48;
+    s2 = n2 - 48;
+    s3 = n3 - 48;
+    s4 = n4 - 48;
+    s5 = n5 - 48;
+    r = (s5*1)+(s4*10)+(s3*100)+(s2*1000)+(s1*10000);
+    dis = r * 0.003384;
+    discm = (dis * 2.54)/100.0;   //Distancia en cemtimetros, a continuacion se quito              
+    j = 0; 
+  }
   //Sensor de FLujo Amper
 
   // Seonsor de Presion
-
-  val = (5.000 * analogRead(1))/1024.000;
-  p += val;
-  i++;
 
   // Termina bloque de sensores 
   
@@ -288,7 +304,7 @@ void loop()
       banenv = 1;
     } 
     if(a == 67 || a == 99){    // C en ascii
-      x_bee.print("CP");     // Se envia la cadena de reconocimiento de sensores
+      x_bee.print("CN");     // Se envia la cadena de reconocimiento de sensores
     }
     if(a == 82 || a == 114){    // R en ascii
       banres = 1;              // Se activa la bndera de reset, Reset REMOTO
@@ -383,4 +399,3 @@ void restaura(){
   h = h1 = 'h';
   mi = mi1 = 'm';
 }
-

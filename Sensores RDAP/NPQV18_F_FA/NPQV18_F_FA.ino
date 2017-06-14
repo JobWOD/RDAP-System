@@ -7,17 +7,23 @@
 #include "RTClib.h"
 
 SoftwareSerial x_bee(2,3);                    // Creación del puerto serial de comunicacion con x_bee RX TX
+//Guardar diametro
+union Float_Byte{
+  float datoF;
+  byte datoB[4];
+} unionFB;
 //Varibles del Reloj
 DateTime now;
 int ann,mes,dia,hora,minuto,ord;
 char an,an1,m,m1,d,d1,h,h1,mi,mi1;
 //Variables control de flujo frecuencias.
 int pin = 12,z,c,fin,flu;
-unsigned int nummed,nummedda;
 double per,per2,per3,frec,frecs,frecf,flujo,RF;
 //Variables de flujo acumulado
+unsigned int nummed,nummedda;
 unsigned int acumdia, acumdiaan;
 unsigned long acumfin;
+int banfecha;
 //Variables control de flujo Amp.
 double valf,res,pf,reff,fl,sfl,flp;           // valf = valor analogico 0, res = promedio de valf, pf = sumatoria
 int b,redf;                                   // reff = ajuste de curvas, fl = valor de flijo, b = contador, redf = redondeo
@@ -43,7 +49,7 @@ byte concon, banres;                          // Contado de control = concon    
 unsigned int conres;                                  // Conres = contador de reset      banres = bandera de reset 
 byte bancon, banpress;                        // Bandera de control = bancon     //banpress = bandera de tecleo 
 byte conmp, conmf;
-byte conenv, banenv, setclock; 
+byte conenv, banenv, setclock ,banacum;; 
 // Mas variables del control del teclado
 byte Pins_Filas[] = {11, 10, 9, 8};           // Pines Arduino para las filas
 byte Pins_Cols[] = {7, 6, 5, 4};              // Pines Arduinopara las columnas
@@ -60,15 +66,6 @@ RTC_DS3231 RTC;
 LiquidCrystal_I2C lcd(0x27,16,2);
  
 void setup(){   
-  if (EEPROM.read(18) != 2){
-    EEPROMWriteint(0,0);
-    EEPROMWritelong(2,0);
-    EEPROMWritelong(6,0);
-    EEPROMWritelong(10,0);
-    EEPROMWriteint(14,0);
-    EEPROMWriteint(16,0);
-    EEPROM.write(18,2);
-  }
   // initialize timer1 
   valf = b = z = c = areaf = arean = inmode = concam = conmp = 0;
   bancl = concon = banres = conres = bancon = banpress = 0, conenv = 0, banenv = 0;
@@ -231,7 +228,7 @@ void loop()
   //Obtencion de los datos del reloj cada segundo
   now = RTC.now(); // Obtiene la fecha y hora del RTC
 
-  if (now.hour() == 0 && now.minute() == 0 && now.second() == 0){
+  if (now.hour() == 0 && now.minute() == 0 && now.second() == 0 && banacum == 0){     // Cadena real = now.hour() == 0 && now.minute() == 0 && now.second() == 0
     acumdia = EEPROMReadlong(10);
     acumfin = EEPROMReadlong(2);
     acumfin += acumdia;
@@ -245,8 +242,12 @@ void loop()
     nummed = 0;
     EEPROMWriteint(14,nummed);
     EEPROMWriteint(16,nummedda);
+    banacum = 1;
   }
 
+  if (now.hour() == 0 && now.minute() == 1 && now.second() == 0 && banacum == 1)
+    banacum = 0;
+  
   if (bancl == 1){    // Bandera de clear para limpiar el display
     lcd.clear();      // Se limpia el Display y se reinicia la bandera
     bancl = 0;  
@@ -302,19 +303,26 @@ void loop()
       break;
     case 3:  
       lcd.setCursor ( 0, 0 );
-      lcd.print("Total accum:");
+      lcd.print("Total ");
+      if (EEPROMReadint(20) < 10)
+        lcd.print("0");
+      lcd.print(EEPROMReadint(20));
+      lcd.print('/');
+      if (EEPROMReadint(22) < 10)
+        lcd.print("0");
+      lcd.print(EEPROMReadint(22));
+      lcd.print('/');
+      lcd.print(EEPROMReadint(24));
       lcd.setCursor ( 0, 1 );
-      acumfin = EEPROMReadlong(2);
-      lcd.print(acumfin);        // Total de acumulado final
+      lcd.print(EEPROMReadlong(2));        // Total de acumulado final
       lcd.print(" m3");   
       break;
     case 4:  
       lcd.setCursor ( 0, 0 );
       lcd.print("Accum. yesterday:");
       lcd.setCursor ( 0, 1 );
-      acumdiaan = EEPROMReadlong(6);
-      lcd.print(acumdiaan);        // Total de acumulado final
-      lcd.print(" m3/day");   
+      lcd.print(EEPROMReadlong(6));        // Total de acumulado final
+      lcd.print(" m3/day");      
       break;      
     case 5:  
       lcd.setCursor ( 0, 0 );
@@ -329,7 +337,7 @@ void loop()
       lcd.print("Current value:");
       lcd.setCursor ( 0, 1 );
       lcd.print("Flow: ");
-      lcd.print("0");      // flp     //Variable de flujo   //envio
+      lcd.print(flp);      // flp     //Variable de flujo   //envio
       lcd.print(" LPS");
       break;           
     case 7:  
@@ -340,17 +348,16 @@ void loop()
       break;      
     case 8:  
       lcd.setCursor ( 0, 0 );
-      lcd.print("Pipe area: ");
-      canu = EEPROMReadint(0);
-      lcd.print(canu);
+      lcd.print("Pipe Diam: ");
+      lcd.print(EEPROMReadfloat(26));
       lcd.setCursor ( 0, 1 );
       lcd.print("Change: 1.Y 2.N ");  
-      break;    
+      break;      
     case 9:  
       lcd.setCursor ( 0, 0 );
-      lcd.print("Pipe area (mm):");
+      lcd.print("Pipe Diam. (mm):");
       lcd.setCursor ( 0, 1 );
-      lcd.print("Area-> ");  
+      lcd.print("Diam.-> ");  
       lcd.print(cadnum);    
       break;    
     case 10:  
@@ -382,10 +389,24 @@ void loop()
       break;
     case 13:
       lcd.setCursor ( 0, 0 );
-      lcd.print("Numero Mediciones: ");
+      lcd.print("NM: ");
+      lcd.print(EEPROMReadint(16));
       lcd.setCursor ( 0, 1 );
-      nummedda = EEPROMReadint(16);
-      lcd.print(nummedda);
+      lcd.print("AD: ");
+      lcd.print(EEPROMReadlong(6));
+      break;
+    case 14:
+      lcd.setCursor ( 0, 0 );
+      lcd.print("banacum: ");
+      lcd.print(banacum);  
+      break;
+    case 15:
+      lcd.setCursor ( 0, 0 );
+      lcd.print("M: ");
+      lcd.print(EEPROMReadint(14));
+      lcd.setCursor ( 0, 1 );
+      lcd.print("A: ");
+      lcd.print(EEPROMReadlong(10));  
       break;
   }  
 
@@ -449,7 +470,7 @@ void keypadEvent(KeypadEvent eKey){      //aquientra al presionar cualquier tecl
         case 'A': if (sel == 9)           // estamos en pantalla de ingreso estamos en pantalla de ingreso guarda valor del area de tuberia
                     sel = 10;              // guarda valor del area de tanque
                   bancl = 1;              // se limpia la pantalla
-                  EEPROMWriteint(0,cadnum.toInt());
+                  EEPROMWritefloat(26,cadnum.toFloat());
                   cadnum = "";
                   inmode = 0;             // al guadar los datos cierra el inmode (modo de ingreso)
                   break;              
@@ -469,6 +490,13 @@ void keypadEvent(KeypadEvent eKey){      //aquientra al presionar cualquier tecl
                     sel = 10;
                     setclock = 0;
                     RTC.adjust(DateTime(ann,mes,dia,hora,minuto,00)); // Establece la fecha y hora
+                    banfecha = EEPROMReadint(18);
+                    if (banfecha == 0){
+                      EEPROMWriteint(20,dia);
+                      EEPROMWriteint(22,mes);
+                      EEPROMWriteint(24,ann);
+                      EEPROMWriteint(18,1);
+                    }
                     restaura();
                     ord = 0;
                   }
@@ -509,6 +537,8 @@ void keypadEvent(KeypadEvent eKey){      //aquientra al presionar cualquier tecl
             case '2': sel = 7; break;
             case 'C': sel = 2; break;
             case '*': sel = 13; break;
+            case '#': sel = 14; break;
+            case '0': sel = 15; break;;
           }
           bancl = 1;
           break;    
@@ -596,4 +626,23 @@ long EEPROMReadint(long address){
   
   //Return the recomposed long by using bitshift.
   return ((two << 0) & 0xFF) + ((one << 8) & 0xFFFF);
+}
+
+void EEPROMWritefloat(int address, float value){
+  unionFB.datoF = value;
+  EEPROM.write(address, unionFB.datoB[0]);
+  EEPROM.write(address + 1, unionFB.datoB[1]);
+  EEPROM.write(address + 2, unionFB.datoB[2]);
+  EEPROM.write(address + 3, unionFB.datoB[3]);
+}
+
+float EEPROMReadfloat(int address){
+  //Read the 4 bytes from the eeprom memory.
+  unionFB.datoF = 0.0;
+  unionFB.datoB[0] = EEPROM.read(address);
+  unionFB.datoB[1] = EEPROM.read(address + 1);
+  unionFB.datoB[2] = EEPROM.read(address + 2);
+  unionFB.datoB[3] = EEPROM.read(address + 3);
+  //Return the recomposed long by using bitshift.
+  return unionFB.datoF;
 }

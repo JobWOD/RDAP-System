@@ -1,5 +1,10 @@
 #include <EEPROM.h> 
 
+union Float_Byte{
+  float datoF;
+  byte datoB[4];
+} unionFB;
+
 void setup() {
   EEPROMWriteint(0,0);    // Diametro de tuberia
   EEPROMWritelong(2,0);   // Acumulado final
@@ -11,11 +16,11 @@ void setup() {
   EEPROMWriteint(20,0);   // Dia
   EEPROMWriteint(22,0);   // Mes
   EEPROMWriteint(24,0);   // Año
+  EEPROMWritefloat(26,0.0); // Diametro en decimales
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-
 }
 
 void EEPROMWritelong(int address, long value){
@@ -62,4 +67,23 @@ long EEPROMReadint(long address){
   
   //Return the recomposed long by using bitshift.
   return ((two << 0) & 0xFF) + ((one << 8) & 0xFFFF);
+}
+
+void EEPROMWritefloat(int address, float value){
+  unionFB.datoF = value;
+  EEPROM.write(address, unionFB.datoB[0]);
+  EEPROM.write(address + 1, unionFB.datoB[1]);
+  EEPROM.write(address + 2, unionFB.datoB[2]);
+  EEPROM.write(address + 3, unionFB.datoB[3]);
+}
+
+float EEPROMReadfloat(int address){
+  //Read the 4 bytes from the eeprom memory.
+  unionFB.datoF = 0.0;
+  unionFB.datoB[0] = EEPROM.read(address);
+  unionFB.datoB[1] = EEPROM.read(address + 1);
+  unionFB.datoB[2] = EEPROM.read(address + 2);
+  unionFB.datoB[3] = EEPROM.read(address + 3);
+  //Return the recomposed long by using bitshift.
+  return unionFB.datoF;
 }

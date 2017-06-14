@@ -7,6 +7,11 @@
 #include "RTClib.h"                           // Libreria para el manejo de reloj en tiempo real
 
 SoftwareSerial x_bee(2,3);                    // Creación del puerto serial de comunicacion con x_bee RX TX
+//Guardar diametro
+union Float_Byte{
+  float datoF;
+  byte datoB[4];
+} unionFB;
 //Varibles del Reloj
 DateTime now;
 int ann,mes,dia,hora,minuto,ord;              // ann = año, ord = orden de entrada
@@ -37,8 +42,9 @@ byte sel;                                 // Seleccion de lo que se imprime
 double areaf, arean;                          // areaf = area del flujo, arean = area de nivel  
 byte inmode;                                  // Variable que indica que hay datos de entrada.
 String cadnum;                                // cadnum = cadena de numeros de valores guardados.
-int canu;                                     // canu = area de la tuberia guardada
-double art,dm;                                // dm = diametro en mm, canu = valor del area
+float canu;                                     // canu = area de la tuberia guardada
+float dm;
+float art;                                   // dm = diametro en mm, canu = valor del area
 byte concam, bancl;                           // Variable de contador para mostrar la informacion en display
 byte concon, banres;                          // Contado de control = concon     // bancl = bandera de clean
 unsigned int conres;                          // Conres = contador de reset      banres = bandera de reset 
@@ -116,7 +122,7 @@ ISR(TIMER1_OVF_vect)        // Interrupt service routine, vector de interrupcion
   res = pf/b;                               // Se calcula el promedio de lod valores 
   redf = res * 1000;                        // Se redondea para mejorar la manipulacion de los datos
   reff = 0.0022 * redf - 1.905;            // el ajuste de curvas hace referenca a un archivo excel
-  canu = EEPROMReadint(0);                  // se lee la memoria EEPROM segun el dato que guardaron
+  canu = EEPROMReadfloat(26);               // se lee la memoria EEPROM segun el dato que guardaron
   dm = canu/10.0;                           // conversion de los milimetros
   art = (3.14159 * dm * dm)/4.0;            // calculo del area de la tuberia
   if (reff <= 0.37)                         // si la velocidad es muy poca muestra 0
@@ -301,8 +307,12 @@ void loop()
     case 3:  
       lcd.setCursor ( 0, 0 );
       lcd.print("Total ");
+      if (EEPROMReadint(20) < 10)
+        lcd.print("0");
       lcd.print(EEPROMReadint(20));
       lcd.print('/');
+      if (EEPROMReadint(22) < 10)
+        lcd.print("0");
       lcd.print(EEPROMReadint(22));
       lcd.print('/');
       lcd.print(EEPROMReadint(24));
@@ -342,7 +352,7 @@ void loop()
     case 8:  
       lcd.setCursor ( 0, 0 );
       lcd.print("Pipe Diam: ");
-      lcd.print(EEPROMReadint(0));
+      lcd.print(EEPROMReadfloat(26));
       lcd.setCursor ( 0, 1 );
       lcd.print("Change: 1.Y 2.N ");  
       break;    
@@ -350,7 +360,7 @@ void loop()
       lcd.setCursor ( 0, 0 );
       lcd.print("Pipe Diam. (mm):");
       lcd.setCursor ( 0, 1 );
-      lcd.print("Diameter-> ");  
+      lcd.print("Diam.-> ");  
       lcd.print(cadnum);    
       break;    
     case 10:  
@@ -395,10 +405,10 @@ void loop()
       break;
     case 15:
       lcd.setCursor ( 0, 0 );
-      lcd.print(" M: ");
+      lcd.print("M: ");
       lcd.print(EEPROMReadint(14));
       lcd.setCursor ( 0, 1 );
-      lcd.print(" A: ");
+      lcd.print("A: ");
       lcd.print(EEPROMReadlong(10));  
       break;       
   } 
@@ -454,7 +464,7 @@ void keypadEvent(KeypadEvent eKey){      //aquientra al presionar cualquier tecl
         case 'A': if (sel == 9)           // estamos en pantalla de ingreso estamos en pantalla de ingreso guarda valor del area de tuberia
                     sel = 10;              // guarda valor del area de tanque
                   bancl = 1;              // se limpia la pantalla
-                  EEPROMWriteint(0,cadnum.toInt());
+                  EEPROMWritefloat(26,cadnum.toFloat());
                   cadnum = "";
                   inmode = 0;             // al guadar los datos cierra el inmode (modo de ingreso)
                   break;              
@@ -610,4 +620,23 @@ long EEPROMReadint(long address){
   
   //Return the recomposed long by using bitshift.
   return ((two << 0) & 0xFF) + ((one << 8) & 0xFFFF);
+}
+
+void EEPROMWritefloat(int address, float value){
+  unionFB.datoF = value;
+  EEPROM.write(address, unionFB.datoB[0]);
+  EEPROM.write(address + 1, unionFB.datoB[1]);
+  EEPROM.write(address + 2, unionFB.datoB[2]);
+  EEPROM.write(address + 3, unionFB.datoB[3]);
+}
+
+float EEPROMReadfloat(int address){
+  //Read the 4 bytes from the eeprom memory.
+  unionFB.datoF = 0.0;
+  unionFB.datoB[0] = EEPROM.read(address);
+  unionFB.datoB[1] = EEPROM.read(address + 1);
+  unionFB.datoB[2] = EEPROM.read(address + 2);
+  unionFB.datoB[3] = EEPROM.read(address + 3);
+  //Return the recomposed long by using bitshift.
+  return unionFB.datoF;
 }
